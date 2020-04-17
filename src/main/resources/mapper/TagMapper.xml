@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" ><mapper namespace="com.by.mapper.TagMapper">
+    <insert id="saveTag" parameterType="Tag">
+        insert into blog.t_tag(name) values (#{name})
+    </insert>
+    <select id="getTag" parameterType="long" resultType="Tag">
+        select id,name from blog.t_Tag where id = #{id}
+    </select>
+    <select id="listTag" resultType="Tag">
+        select * from t_tag
+    </select>
+    <select id="getTagByName" parameterType="string" resultType="Tag">
+        select id, name from t_tag where name = #{name}
+    </select>
+    <select id="listTagByList" parameterType="list" resultType="tag">
+        select id,name from t_tag
+        <where>
+            <if test="list !=null and list.size>0">
+                <foreach collection="list" open=" and id in(" close=")" item="id" separator=",">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="getTagWithBlogsOrderTop" resultMap="tagAndBlogs">
+        select t.id,t.name,b.id bid from t_blog b inner join t_blog_tags bt
+        on bt.blog_id = b.id inner join t_tag t
+        on t.id = bt.tag_id
+        where b.published = true
+    </select>
+    <resultMap id="tagAndBlogs" type="tag">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <collection property="blogs" ofType="blog" javaType="java.util.ArrayList">
+            <id property="id" column="bid"/>
+        </collection>
+    </resultMap>
+    <update id="updateTag" parameterType="Tag">
+        update t_Tag set name = #{name} where id = #{id}
+    </update>
+    <delete id="deleteTag" parameterType="long">
+        delete from t_Tag where id = #{id}
+    </delete>
+</mapper>

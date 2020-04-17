@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.by.mapper.BlogMapper">
+    <select id="listBlogWithType" resultMap="blogWithType">
+        select b.id,b.title,b.update_time,b.recommend,b.published,t.id,t.name from t_blog b
+        inner join t_type t
+        on b.type_id = t.id
+        order by b.update_time desc
+    </select>
+    <resultMap id="blogWithType" type="blogquery">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="recommend" column="recommend"/>
+        <result property="published" column="published"/>
+        <result property="typeId" column="type_id"/>
+        <association property="type" javaType="type">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+        </association>
+    </resultMap>
+    <select id="listBlogFromSearch" parameterType="blogaboutsearch" resultMap="blogWithType">
+        select b.id,b.title,b.update_time,b.recommend,b.published,t.id,t.name from t_blog b
+        inner join t_type t
+        on b.type_id = t.id
+        where 1 = 1
+        <if test="typeId != null">
+            and b.type_id = #{typeId}
+        </if>
+        <if test="r != null">
+            and b.recommend = #{r}
+        </if>
+        <if test="title != null and title != ''">
+            and b.title like '%${title}%'
+        </if>
+    </select>
+    <select id="getBlog" parameterType="long" resultType="blog">
+        select * from t_blog where id = #{id}
+    </select>
+    <insert id="saveBlog" parameterType="blog" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into t_blog(description,appreciation,commentabled,content,create_time,first_picture,flag,published,recommend,share_statement,title,update_time,views,type_id,user_id)
+        values(#{description},#{appreciation},#{commentabled},#{content},#{createTime},#{firstPicture},#{flag},#{published},#{recommend},#{shareStatement},#{title},#{updateTime},#{views},#{type.id},#{user.id})
+    </insert>
+    <insert id="saveBlogWithTags" parameterType="blog">
+        insert into t_blog_tags(blog_id, tag_id)
+        values
+        <foreach collection="tags" item="tag" separator=",">
+            (#{id},#{tag.id})
+        </foreach>
+    </insert>
+    <update id="updateBlogWithTags" parameterType="blog">
+        update t_blog set description = #{description},appreciation = #{appreciation},commentabled = #{commentabled},content = #{content},create_time = #{createTime},first_picture = #{firstPicture},flag = #{flag},
+        published = #{published},recommend = #{recommend},share_statement = #{shareStatement},title = #{title},
+        update_time = #{updateTime},views = #{views},type_id = #{type.id},user_id = #{user.id}
+        where id = #{id}
+    </update>
+    <delete id="deleteBlogWithTags" parameterType="long">
+        delete from t_blog_tags where blog_id = #{blogId}
+    </delete>
+    <delete id="deleteBlog" parameterType="long">
+        delete from t_blog where id = #{bid}
+    </delete>
+    <!--查询blog及其type和tags-->
+    <select id="getBlogWithTypeWitnTagsByBlogId" parameterType="long" resultMap="blogAndTypeAndTags">
+        select b.id,b.description,b.appreciation,b.commentabled,b.content,
+        b.create_time,b.first_picture,b.flag,b.published,b.recommend,b.share_statement,
+        b.title,b.update_time,b.views,t.id typeid,t.name typename,tag.id tagid,tag.name tagname from t_blog b
+        inner join t_type t
+        on b.type_id = t.id
+        inner join t_blog_tags tbt
+        on tbt.blog_id = b.id
+        inner join t_tag tag
+        on tag.id = tbt.tag_id
+        where b.id = #{id}
+    </select>
+    <resultMap id="blogAndTypeAndTags" type="blog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="description" column="description"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="flag" column="flag"/>
+        <result property="views" column="views"/>
+        <result property="appreciation" column="appreciation"/>
+        <result property="shareStatement" column="share_statement"/>
+        <result property="commentabled" column="commentabled"/>
+        <result property="published" column="published"/>
+        <result property="recommend" column="recommend"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <association property="type" javaType="type">
+            <id property="id" column="typeid"/>
+            <result property="name" column="typename"/>
+        </association>
+        <collection property="tags" ofType="tag" javaType="java.util.ArrayList">
+            <id property="id" column="tagid"/>
+            <result property="name" column="tagname"/>
+        </collection>
+    </resultMap>
+    <select id="getBlogWithTypeAndWithUser" resultMap="blogAndTypeAndUser">
+        select b.id,b.title,b.description,b.first_picture,b.views,b.update_time,t.id tid,t.name tname,
+        u.id uid,u.nickname,u.avatar from t_blog b inner join t_type t
+        on t.id = b.type_id inner join t_user u
+        on u.id = b.user_id
+        where b.published = true
+        order by b.update_time desc
+    </select>
+    <resultMap id="blogAndTypeAndUser" type="blog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="views" column="views"/>
+        <result property="updateTime" column="update_time"/>
+        <association property="type" javaType="type">
+            <id property="id" column="tid"/>
+            <result property="name" column="tname"/>
+        </association>
+        <association property="user" javaType="user">
+            <id property="id" column="uid"/>
+            <result property="nickname" column="nickname"/>
+            <result property="avatar" column="avatar"/>
+        </association>
+    </resultMap>
+    <select id="getBlogIsRecommend" resultType="blog" parameterType="integer">
+        select b.id,b.title from t_blog b where b.recommend = true and b.published = true order by b.update_time desc LIMIT 0,#{num}
+    </select>
+    <select id="getBlogBySearchWithQuery" parameterType="string" resultMap="blogAndTypeAndUser">
+        <bind name="pattern" value="'%' + query + '%'" />
+        select b.id,b.title,b.description,b.first_picture,b.views,b.update_time,t.id tid,t.name tname,
+        u.id uid,u.nickname,u.avatar from t_blog b inner join t_type t
+        on t.id = b.type_id inner join t_user u
+        on u.id = b.user_id
+        where b.published = true
+        and (b.title like #{pattern} or b.content like  #{pattern})
+        order by b.update_time desc
+    </select>
+    <select id="getBlogWithTagsAndWithUser" parameterType="long" resultMap="blogAndTagsAndUser">
+        select b.id,b.title,b.flag,b.description,b.first_picture,b.views,b.update_time,b.content,b.commentabled,b.appreciation,b.share_statement,t.id tid,t.name tname,
+        u.id uid,u.nickname,u.avatar from t_blog b inner join t_blog_tags bt
+        on bt.blog_id = b.id inner join t_tag t
+        on t.id = bt.tag_id inner join t_user u
+        on u.id = b.user_id
+        where b.published = true and b.id = #{id}
+    </select>
+    <resultMap id="blogAndTagsAndUser" type="blog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="flag" column="flag"/>
+        <result property="description" column="description"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="views" column="views"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="content" column="content"/>
+        <result property="appreciation" column="appreciation"/>
+        <result property="commentabled" column="commentabled"/>
+        <result property="shareStatement" column="share_statement"/>
+        <association property="user" javaType="user">
+            <id property="id" column="uid"/>
+            <result property="nickname" column="nickname"/>
+            <result property="avatar" column="avatar"/>
+        </association>
+        <collection property="tags" ofType="tag" javaType="java.util.ArrayList">
+            <id property="id" column="tid"/>
+            <result property="name" column="tname"/>
+        </collection>
+    </resultMap>
+    <select id="getBlogsByTypeId" parameterType="long" resultMap="blogAndTypeAndUser">
+        select b.id,b.title,b.description,b.first_picture,b.views,b.update_time,t.id tid,t.name tname,
+        u.id uid,u.nickname,u.avatar from t_blog b inner join t_type t
+        on t.id = b.type_id inner join t_user u
+        on u.id = b.user_id
+        where b.published = true and b.type_id = #{id}
+        order by b.update_time desc
+    </select>
+    <select id="getBlogsByTagId" parameterType="long" resultMap="blogAndTypeAndTagsAndUser">
+        select blog.id,blog.description,blog.appreciation,blog.commentabled,blog.content,
+        blog.create_time,blog.first_picture,blog.flag,blog.published,blog.recommend,blog.share_statement,
+        blog.title,blog.update_time,blog.views,blog.type_id, t.id typeid,t.name typename,tag.id tagid,tag.name tagname,u.id uid,u.nickname,u.avatar from
+        (select b.id,b.description,b.appreciation,b.commentabled,b.content,
+        b.create_time,b.first_picture,b.flag,b.published,b.recommend,b.share_statement,
+        b.title,b.update_time,b.views,b.type_id,b.user_id from t_blog b inner join t_blog_tags bt
+        on bt.blog_id = b.id inner join t_tag tag
+        on tag.id = bt.tag_id
+        where tag.id = #{id} and b.published = true) blog
+        inner join t_type t
+        on blog.type_id = t.id inner join t_blog_tags bt
+        on bt.blog_id = blog.id inner join t_tag tag
+        on tag.id = bt.tag_id inner join t_user u
+        on u.id = blog.user_id
+    </select>
+    <resultMap id="blogAndTypeAndTagsAndUser" type="blog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="description" column="description"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="flag" column="flag"/>
+        <result property="views" column="views"/>
+        <result property="appreciation" column="appreciation"/>
+        <result property="shareStatement" column="share_statement"/>
+        <result property="commentabled" column="commentabled"/>
+        <result property="published" column="published"/>
+        <result property="recommend" column="recommend"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <association property="type" javaType="type">
+            <id property="id" column="typeid"/>
+            <result property="name" column="typename"/>
+        </association>
+        <association property="user" javaType="user">
+            <id property="id" column="uid"/>
+            <result property="nickname" column="nickname"/>
+            <result property="avatar" column="avatar"/>
+        </association>
+        <collection property="tags" ofType="tag" javaType="java.util.ArrayList">
+            <id property="id" column="tagid"/>
+            <result property="name" column="tagname"/>
+        </collection>
+    </resultMap>
+    <select id="findBlogByYear" parameterType="string" resultMap="blogAndTypeAndTagsAndUser">
+        select blog.id,blog.description,blog.appreciation,blog.commentabled,blog.content,
+        blog.create_time,blog.first_picture,blog.flag,blog.published,blog.recommend,blog.share_statement,
+        blog.title,blog.update_time,blog.views,blog.type_id, t.id typeid,t.name typename,tag.id tagid,tag.name tagname,u.id uid,u.nickname,u.avatar from
+        (select b.id,b.description,b.appreciation,b.commentabled,b.content,
+        b.create_time,b.first_picture,b.flag,b.published,b.recommend,b.share_statement,
+        b.title,b.update_time,b.views,b.type_id,b.user_id from t_blog b inner join t_blog_tags bt
+        on bt.blog_id = b.id inner join t_tag tag
+        on tag.id = bt.tag_id
+        where b.published = true and date_format(b.update_time,'%Y')=#{year})  blog
+        inner join t_type t
+        on blog.type_id = t.id inner join t_blog_tags bt
+        on bt.blog_id = blog.id inner join t_tag tag
+        on tag.id = bt.tag_id inner join t_user u
+        on u.id = blog.user_id
+    </select>
+</mapper>

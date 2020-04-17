@@ -1,0 +1,21 @@
+spring:
+  thymeleaf:
+    encoding: UTF-8
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+  template:
+    cache: false
+  mvc:
+    favicon:
+      enabled: false
+  profiles:
+    active: dev
+comment.avatar: /images/Imgpicture/
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.by.po,com.by.vo
+  configuration:
+    map-underscore-to-camel-case: true
+
+

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.by.mapper.CommentMapper">
+    <insert id="saveComment" parameterType="comment">
+        insert into blog.t_comment(avatar, content, create_time, email, nickname, blog_id, parent_comment_id,admincomment) values (#{avatar},#{content},#{createTime},#{email},#{nickname},#{blog.id},#{parentComment.id},#{adminComment})
+    </insert>
+    <select id="listCommentByBlogId" parameterType="long" resultType="comment">
+        select c.id,c.avatar,c.content,c.create_time,c.email,c.nickname,c.blog_id,c.parent_comment_id,c.admincomment from t_comment c
+        where c.blog_id = #{id} order by c.create_time desc
+    </select>
+
+    <select id="getCommentByParentId" parameterType="long" resultType="comment">
+        select c.id,c.avatar,c.content,c.create_time,c.email,c.nickname,c.blog_id,c.parent_comment_id,c.admincomment from t_comment c
+        where c.id = #{id}
+    </select>
+
+    <select id="getReplyListByParentId" parameterType="long" resultType="comment">
+        select c.id,c.avatar,c.content,c.create_time,c.email,c.nickname,c.blog_id,c.parent_comment_id,c.admincomment from t_comment c
+        where c.parent_comment_id = #{id} order by c.create_time asc
+    </select>
+
+    <select id="findByBlogIdParentIdNull" resultType="comment">
+        select c.id ,c.nickname,c.email,c.content,c.avatar,c.create_time,c.blog_id,c.parent_comment_id,c.admincomment
+        from blog.t_comment c
+        where c.blog_id = #{blogId} and
+        <if test="blogParentId == null">
+            c.parent_comment_id is null
+        </if>
+        <if test="blogParentId != null">
+            c.parent_comment_id = #{blogParentId}
+        </if>
+        order by c.create_time asc
+    </select>
+
+</mapper>
